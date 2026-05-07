@@ -1,116 +1,106 @@
-# 🤖 Deep Search Agent
+# 🖼️ Flask Background Removal App
 
-An advanced, multi-agent research and writing system powered by state-of-the-art language models (DeepSeek & Gemini) and real-time web search capabilities (Tavily).
+A simple yet powerful Flask web application that automatically removes the background from images using deep learning.
 
-![Python Version](https://img.shields.io/badge/python-3.13%2B-blue)
-![License](https://img.shields.io/badge/license-MIT-green)
+![Python](https://img.shields.io/badge/python-3.9-blue.svg)
+![PyTorch](https://img.shields.io/badge/PyTorch-1.10.2-ee4c2c.svg)
+![Flask](https://img.shields.io/badge/Flask-2.0.3-lightgrey.svg)
 
 ---
 
 ## 🌟 Overview
 
-**Deep Search Agent** is an autonomous CLI application that orchestrates a team of specialized AI agents to handle complex research queries. It breaks down user requests, gathers real-time information from the web, and synthesizes it into high-quality, professional reports.
-
-The system features dynamic handoffs between models, utilizing **DeepSeek's reasoning capabilities** for planning and **Gemini's speed and quality** for research and writing. It also includes a tiered output system (Basic vs. Premium) to provide different levels of detail and citation formatting.
+This application provides a web interface where users can upload an image, and it returns the image with the background completely removed. It leverages the **U<sup>2</sup>-Net (U-Square-Net)** deep learning architecture via **PyTorch** to generate highly accurate salient object masks.
 
 ## ✨ Key Features
 
-- **Multi-LLM Architecture:** Leverages `deepseek-reasoner` for complex planning and `gemini-2.0-flash` / `gemini-2.5-flash` for high-speed research and writing.
-- **Autonomous Agent Handoffs:** Tasks are intelligently delegated down a chain of specialized agents.
-- **Real-time Web Search:** Integrated with Tavily API for accurate, up-to-date web research.
-- **Interactive Prompts:** Agents can dynamically pause execution to ask the user for clarifying information if the query is ambiguous.
-- **Tiered Generation:** Supports conditional logic for "Premium" vs "Basic" users, triggering a more advanced writing agent (`gemini-2.5-flash`) for premium users with comprehensive source checking and NYT/Bloomberg-style reporting.
+- **Web Interface:** Easy-to-use Flask UI for uploading and viewing images.
+- **Deep Learning Powered:** Uses the pre-trained `U2NET` model for state-of-the-art salient object detection.
+- **Automatic Masking:** Generates an alpha matte (mask) and automatically applies it to extract the foreground.
+- **CPU/GPU Support:** Automatically detects and uses CUDA if available, falling back to CPU otherwise.
 
-## 🏗️ System Architecture & Agent Roles
+## 🏗️ Architecture
 
-The pipeline follows a structured, sequential handoff process:
-
-1. 🗣️ **Helping Agent (Entry Point)**  
-   *Model: Gemini 2.0 Flash*  
-   Interacts with the user, determines intent, and can request additional clarifying information directly from the CLI before passing the task forward.
-   
-2. 🧠 **Planning Agent**  
-   *Model: DeepSeek Reasoner*  
-   Breaks down the user's query into a concrete execution plan, identifying exactly what information needs to be searched.
-   
-3. 🌐 **Web Search Agent**  
-   *Model: Gemini 2.0 Flash*  
-   Utilizes the Tavily API to browse the web, gathering relevant sources and data based on the Planner's instructions.
-   
-4. ✍️ **Professional Writer (Basic / Premium)**  
-   *Basic Model: Gemini 2.0 Flash | Premium Model: Gemini 2.5 Flash*  
-   Synthesizes the gathered research into a comprehensive report. Premium tier includes strict source checking, conflict detection, and a rigorous citation system.
+- **Backend:** Flask (`app.py`) handles routing, file uploads, and model inference.
+- **Model Architecture:** U<sup>2</sup>-Net implemented in PyTorch (`model/`).
+- **Data Preprocessing:** Images are resized to `320x320`, normalized, and passed as tensors to the network.
+- **Output:** The predicted mask is combined with the original image as an RGBA PNG, saving the final output in the `static/results/` directory.
 
 ## 🚀 Getting Started
 
+Follow these instructions to get the application running on your local machine.
+
 ### Prerequisites
 
-- Python 3.13 or higher
-- [uv](https://github.com/astral-sh/uv) (recommended) or pip
+You need `python 3.9` installed. It is highly recommended to use a virtual environment like Conda or venv.
 
-### API Keys Required
-You will need API keys from the following providers:
-- [DeepSeek API](https://platform.deepseek.com/)
-- [Google Gemini API](https://aistudio.google.com/)
-- [Tavily API](https://tavily.com/) *(Note: Tavily uses the `TAVILY_API_KEY` environment variable implicitly).*
-
-### Installation
+### Installation Steps
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/yourusername/deep-search-agent.git
-   cd deep-search-agent
+   git clone https://github.com/iabahmad/background_removal_app.git
+   cd background_removal_app
    ```
 
-2. **Install dependencies:**
-
-   Using `uv` (recommended):
+2. **Create a virtual environment (Optional but recommended):**
    ```bash
-   uv sync
+   conda create -p ./venv python==3.9
+   conda activate ./venv/
    ```
-   *Or using pip:*
+
+3. **Install the required dependencies:**
    ```bash
-   pip install .
+   pip install -r requirements.txt
    ```
 
-3. **Set up environment variables:**
-   Create a `.env` file in the root directory and add your API keys:
-   ```env
-   DEEPSEEK_API_KEY=your_deepseek_api_key_here
-   Gemini_API_KEY=your_gemini_api_key_here
-   TAVILY_API_KEY=your_tavily_api_key_here
-   ```
+   *Note: This will install PyTorch, OpenCV, Flask, scikit-image, and other necessary libraries.*
 
-### Usage
+4. **Model Weights:**
+   Ensure that the pre-trained U2NET model file (`u2net.pth`) is placed inside the `saved_models/u2net/` directory.
 
-Run the main script to start the agentic loop:
+### Running the App
+
+Start the Flask development server:
 
 ```bash
-python main.py
+flask run
+```
+*Alternatively, you can run:*
+```bash
+python app.py
 ```
 
-The system will prompt you for a query:
+The application will start on `http://127.0.0.1:5000/`.
+
+## 📁 Directory Structure
+
 ```text
-What is your query?: 
+background_removal_app/
+│
+├── app.py                 # Main Flask application and inference pipeline
+├── model/                 # Contains the U2NET model architecture classes
+├── data_loader.py         # Helper functions for data loading (if used)
+├── saved_models/          # Directory containing the pre-trained weights
+│   └── u2net/
+│       └── u2net.pth      # Model weights file
+├── static/                # Static assets
+│   ├── inputs/            # Temporarily saves user uploaded images
+│   ├── masks/             # Saves the generated black/white masks
+│   └── results/           # Saves the final background-removed images
+├── templates/             # HTML templates (index.html)
+└── uploads/               # Directory for raw incoming uploads
 ```
 
-**Example Queries:**
-- *"What are the latest advancements in solid-state batteries as of 2024?"*
-- *"Write a comprehensive report comparing the economic impacts of AI in the US vs Europe."*
-- *"Summarize the current state of quantum computing and provide sources."*
+## 🧠 How it Works
 
-## ⚙️ Configuration
+1. The user uploads an image via the web interface (`/`).
+2. The image is saved locally and loaded via OpenCV.
+3. It is resized and normalized into a PyTorch FloatTensor.
+4. The tensor is passed through the `U2NET` network.
+5. The network outputs a mask predicting the salient object.
+6. A post-processing script overlays the mask onto the original image, converting the background to transparent (RGBA).
+7. The result is returned to the frontend.
 
-You can toggle the `premium_user` flag in `main.py` (line 10) to test the different output tiers:
+## 📝 License
 
-```python
-premium_user = True  # Set to False to use the basic Professional Writer
-```
-
-## 🛠️ Tech Stack
-
-- **[OpenAI Agents Framework](https://github.com/openai/openai-python):** Used for orchestrating agents and handoffs.
-- **DeepSeek API:** For complex reasoning (`deepseek-reasoner`).
-- **Gemini API:** For high-speed generation (`gemini-2.0-flash` & `gemini-2.5-flash`).
-- **Tavily:** Search engine optimized for LLMs.
-- **Python-dotenv:** For managing environment variables.
+This project is open-source. Please refer to the repository owner for specific licensing details.
